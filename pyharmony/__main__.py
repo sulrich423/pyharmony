@@ -91,7 +91,7 @@ def ha_write_config_file(config, path):
     Returns:
         True
     """
-    with open(path, 'w+') as file_out:
+    with open(path, 'w+', encoding='utf-8') as file_out:
         file_out.write('Activities\n')
         for activity in config['activity']:
             file_out.write('  ' + activity['id'] + ' - ' + activity['label'] + '\n')
