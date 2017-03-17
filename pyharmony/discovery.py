@@ -14,7 +14,7 @@ PORT_TO_ANNOUNCE = 61991
 
 
 class Discovery:
-    def ping_poll(self, listen_socket, retries, interval):
+    def ping_poll(self, listen_socket, scan_attempts, interval):
         sock = socket.socket(socket.AF_INET,      # Internet
                              socket.SOCK_DGRAM)   # UDP
 
@@ -22,10 +22,11 @@ class Discovery:
 
         message = '_logitech-reverse-bonjour._tcp.local.\n{}'.format(
                         PORT_TO_ANNOUNCE).encode('utf-8')
-        while retries > 0:
+        attempts = scan_attempts
+        while attempts > 0:
             time.sleep(interval)
             sock.sendto(message, ('255.255.255.255', 5224))
-            retries -= 1
+            attempts -= 1
 
         # Close our ping socket
         sock.close()
@@ -41,7 +42,7 @@ class Discovery:
             pairs[key_value[0]] = key_value[1]
         return pairs
 
-    def discover(self, retries, timeout):
+    def discover(self, scan_attempts, scan_interval):
         # https://ruslanspivak.com/lsbaws-part1/
         listen_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         listen_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -53,7 +54,7 @@ class Discovery:
 
         thread = threading.Thread(
             target=self.ping_poll,
-            args=(listen_socket, retries, timeout,),
+            args=(listen_socket, scan_attempts, scan_interval,),
             daemon=True)
         thread.start()
 
@@ -70,15 +71,14 @@ class Discovery:
         return [hubs[h] for h in hubs]
 
 
-def discover(retries=3, timeout=2):
+def discover(scan_attempts=3, scan_interval=2):
     """Creates a Harmony client and initializes session.
 
     Args:
-        ip_address (str): Harmony device IP address
-        port (str): Harmony device port
-        token (str): Valid session token
+        scan_attempts (int): Number of times to scan the network
+        scan_interval (int): Seconds between running each network scan
 
     Returns:
-        A connected HarmonyClient instance
+        A list of Hub devices found and their configs
     """
-    return Discovery().discover(retries, timeout)
+    return Discovery().discover(scan_attempts, scan_interval)
