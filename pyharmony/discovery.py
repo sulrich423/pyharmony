@@ -7,10 +7,12 @@
 import socket
 import time
 import threading
-
+import logging
 
 UDP_IP = '0.0.0.0'
 PORT_TO_ANNOUNCE = 61991
+
+logger = logging.getLogger(__name__)
 
 
 class Discovery:
@@ -23,9 +25,13 @@ class Discovery:
         message = '_logitech-reverse-bonjour._tcp.local.\n{}'.format(
                         PORT_TO_ANNOUNCE).encode('utf-8')
         attempts = scan_attempts
+
         while attempts > 0:
+            try:
+                sock.sendto(message, ('255.255.255.255', 5224))
+            except Exception as e:
+                logger.error('Error pinging network: %s', e)
             time.sleep(interval)
-            sock.sendto(message, ('255.255.255.255', 5224))
             attempts -= 1
 
         # Close our ping socket
@@ -37,6 +43,9 @@ class Discovery:
 
     def deserialize_response(self, response):
         pairs = {}
+        if not response.strip():
+            return False
+
         for data_point in response.split(';'):
             key_value = data_point.split(':')
             pairs[key_value[0]] = key_value[1]
@@ -59,15 +68,16 @@ class Discovery:
         thread.start()
 
         hubs = {}
-        while thread.is_alive():
-            try:
-                client_connection, client_address = listen_socket.accept()
+        try:
+            client_connection, client_address = listen_socket.accept()
+            while thread.is_alive():
                 request = client_connection.recv(1024)
                 hub = self.deserialize_response(request.decode('UTF-8'))
-                hubs[hub['uuid']] = hub
-            except Exception as e:
-                # error parsing result or no hubs found
-                pass
+                if hub:
+                    hubs[hub['uuid']] = hub
+        except ConnectionAbortedError as e:
+            # Thread (possibly) closed the socket after no hubs fund
+            pass
         return [hubs[h] for h in hubs]
 
 
