@@ -279,6 +279,19 @@ def ha_sync(token, ip, port):
     return 0
 
 
+def ha_discover(scan_attempts, scan_interval):
+    """Discovers hubs on local network.
+    Args:
+        scan_attempts (int): Number of times to scan the network
+        scan_interval (int): Seconds between running each network scan
+
+    Returns:
+        List of config info for any hubs found
+    """
+    hubs = harmony_discovery.discover(scan_attempts, scan_interval)
+    return hubs
+
+
 # Functions for use on command line
 def show_config(args):
     """Connects to the Harmony and return current configuration.
