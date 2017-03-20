@@ -33,7 +33,8 @@ Usage
 Pyharmony - Harmony device control
 
 ```
-usage: harmony [-h] --harmony_ip HARMONY_IP [--harmony_port HARMONY_PORT]
+usage: harmony [-h] (--harmony_ip HARMONY_IP | --discover)
+               [--harmony_port HARMONY_PORT]
                [--loglevel {CRITICAL,ERROR,DEBUG,WARNING,INFO}]
                {show_config,show_current_activity,start_activity,power_off,sync,send_command}
                ...
@@ -61,6 +62,9 @@ optional arguments:
 required arguments:
   --harmony_ip HARMONY_IP
                         IP Address of the Harmony device. (default: None)
+  OR
+  --discover
+                        Run a network scan to discover hubs
 ```
 
 TODO
