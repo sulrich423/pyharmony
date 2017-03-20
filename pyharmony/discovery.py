@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 
 class Discovery:
     def ping_poll(self, listen_socket, scan_attempts, interval):
+        """Broadcasts a hub discovery message across network"""
         sock = socket.socket(socket.AF_INET,      # Internet
                              socket.SOCK_DGRAM)   # UDP
 
@@ -42,6 +43,7 @@ class Discovery:
         listen_socket.close()
 
     def deserialize_response(self, response):
+        """Parses `key:value;` formatted string into dictionary"""
         pairs = {}
         if not response.strip():
             return False
@@ -76,7 +78,7 @@ class Discovery:
                 if hub:
                     hubs[hub['uuid']] = hub
         except ConnectionAbortedError as e:
-            # Thread (possibly) closed the socket after no hubs fund
+            # Thread (possibly) closed the socket after no hubs found
             pass
         return [hubs[h] for h in hubs]
 
