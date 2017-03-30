@@ -238,7 +238,7 @@ def ha_send_command(token, ip, port, device, command, repeat_num=1, delay_secs=0
     return 0
 
 def ha_send_commands(token, ip, port, device, commands, delay_secs=0.4):
-    """Connects to the Harmony and send a simple command.
+    """Connects to the Harmony and sends multiple simple commands.
 
     Args:
         token (str): Session token obtained from hub
