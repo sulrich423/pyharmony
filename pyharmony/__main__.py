@@ -276,6 +276,15 @@ def ha_sync(token, ip, port):
     client.disconnect(send_close=True)
     return 0
 
+def ha_change_channel(token, ip, port, channel):
+    client = ha_get_client(token, ip, port)
+    status = client.change_channel(channel)
+    client.disconnect(send_close=True)
+    if status:
+        return True
+    else:
+        logger.error('Unable to change the channel')
+        return False
 
 # Functions for use on command line
 def show_config(args):
