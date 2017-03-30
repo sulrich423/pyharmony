@@ -166,10 +166,9 @@ class HarmonyClient(sleekxmpp.ClientXMPP):
         """
         activity = self.get_current_activity()
         if activity != -1:
-            if self.start_activity(-1):
-                return True
-            else:
-                return False
+            return self.start_activity(-1)
+        else:
+            return true
 
 
 def create_and_connect_client(ip_address, port, token):
