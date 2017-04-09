@@ -469,6 +469,10 @@ def main():
         level=loglevels[args.loglevel],
         format='%(levelname)s:\t%(name)s\t%(message)s')
 
+    harmony_auth.logger.setLevel(loglevels[args.loglevel])
+    harmony_client.logger.setLevel(loglevels[args.loglevel])
+    harmony_discovery.logger.setLevel(loglevels[args.loglevel])
+
     if args.discover:
         sys.exit(discover(args))
     else:
