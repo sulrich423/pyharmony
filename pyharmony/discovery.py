@@ -29,6 +29,7 @@ class Discovery:
         attempts = scan_attempts
         while attempts > 0:
             try:
+                logger.debug('Pinging network on port %s', PORT_TO_ANNOUNCE)
                 sock.sendto(message, ('255.255.255.255', 5224))
             except Exception as e:
                 logger.error('Error pinging network: %s', e)
