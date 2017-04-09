@@ -19,6 +19,8 @@ class Discovery:
     def ping_poll(self, listen_socket, scan_attempts, interval):
         """Broadcasts a hub discovery message across network"""
 
+        # Format of broadcast ported from @swissmanu
+        # https://github.com/swissmanu/harmonyhubjs-discover
         sock = socket.socket(socket.AF_INET,      # Internet
                              socket.SOCK_DGRAM)   # UDP
 
