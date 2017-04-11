@@ -16,35 +16,25 @@ logger = logging.getLogger(__name__)
 
 
 class Discovery:
-    def ping_poll(self, listen_socket, scan_attempts, interval):
-        """Broadcasts a hub discovery message across network"""
 
-        # Format of broadcast ported from @swissmanu
-        # https://github.com/swissmanu/harmonyhubjs-discover
-        sock = socket.socket(socket.AF_INET,      # Internet
-                             socket.SOCK_DGRAM)   # UDP
+    def listen(self, hubs, listen_socket):
+        client_connection, client_address = listen_socket.accept()
+        while True:
+            request = client_connection.recv(1024)
+            if not request:
+                break
 
-        sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-        message = '_logitech-reverse-bonjour._tcp.local.\n{}'.format(
-                        PORT_TO_ANNOUNCE).encode('utf-8')
+            hub = self.deserialize_response(
+                request.decode('UTF-8'))
 
-        attempts = scan_attempts
-        while attempts > 0:
-            try:
-                logger.debug('Pinging network on port %s', PORT_TO_ANNOUNCE)
-                sock.sendto(message, ('255.255.255.255', 5224))
-            except Exception as e:
-                logger.error('Error pinging network: %s', e)
-
-            time.sleep(interval)
-            attempts -= 1
-
-        # Close our ping socket
-        sock.close()
-
-        # Closing the listen_socket will trigger the 'listen_socket.accept' to
-        # bail out of its synced loop and return if no hubs ever respond
-        listen_socket.close()
+            if hub:
+                uuid = hub['uuid']
+                if uuid not in hubs:
+                    logger.debug('Found new hub %s', uuid)
+                    hubs[hub['uuid']] = hub
+                else:
+                    logger.debug('Found existing hub %s', uuid)
+        client_connection.close()
 
     def deserialize_response(self, response):
         """Parses `key:value;` formatted string into dictionary"""
@@ -67,36 +57,37 @@ class Discovery:
             ))
         listen_socket.listen(1)
 
-        thread = threading.Thread(
-            target=self.ping_poll,
-            args=(listen_socket, scan_attempts, scan_interval,),
-            daemon=True)
-        thread.start()
-
         hubs = {}
-        try:
-            while thread.is_alive():
-                client_connection, client_address = listen_socket.accept()
-                while True:
-                    request = client_connection.recv(1024)
-                    if not request:
-                        break
 
-                    hub = self.deserialize_response(
-                        request.decode('UTF-8'))
+        listen_thread = threading.Thread(
+            target=self.listen,
+            args=(hubs, listen_socket,),
+            daemon=True)
+        listen_thread.start()
 
-                    if hub:
-                        uuid = hub['uuid']
-                        if uuid not in hubs:
-                            logger.debug('Found new hub %s', uuid)
-                            hubs[hub['uuid']] = hub
-                        else:
-                            logger.debug('Found existing hub %s', uuid)
+        ping_sock = socket.socket(socket.AF_INET,       # Internet
+                                  socket.SOCK_DGRAM)    # UDP
+        ping_sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
 
-                client_connection.close()
-        except ConnectionAbortedError as e:
-            # Thread (possibly) closed the socket after no hubs found
-            pass
+        # Format of broadcast ported from @swissmanu
+        # https://github.com/swissmanu/harmonyhubjs-discover
+        MESSAGE = '_logitech-reverse-bonjour._tcp.local.\n{}'.format(
+                        PORT_TO_ANNOUNCE).encode('utf-8')
+
+        for scan in range(0, scan_attempts):
+            try:
+                logger.debug('Pinging network on port %s', PORT_TO_ANNOUNCE)
+                ping_sock.sendto(MESSAGE, ('255.255.255.255', 5224))
+            except Exception as e:
+                logger.error('Error pinging network: %s', e)
+
+            time.sleep(scan_interval)
+
+        # Close the sockets
+        ping_sock.close()
+        listen_socket.close()
+
+        logger.info('Completed scan, %s hub(s) found.', len(hubs))
         return [hubs[h] for h in hubs]
 
 
