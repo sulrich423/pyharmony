@@ -18,23 +18,21 @@ logger = logging.getLogger(__name__)
 class Discovery:
 
     def listen(self, hubs, listen_socket):
-        client_connection, client_address = listen_socket.accept()
         while True:
+            client_connection, client_address = listen_socket.accept()
             request = client_connection.recv(1024)
-            if not request:
-                break
+            if request:
+                hub = self.deserialize_response(
+                    request.decode('UTF-8'))
 
-            hub = self.deserialize_response(
-                request.decode('UTF-8'))
-
-            if hub:
-                uuid = hub['uuid']
-                if uuid not in hubs:
-                    logger.debug('Found new hub %s', uuid)
-                    hubs[hub['uuid']] = hub
-                else:
-                    logger.debug('Found existing hub %s', uuid)
-        client_connection.close()
+                if hub:
+                    uuid = hub['uuid']
+                    if uuid not in hubs:
+                        logger.debug('Found new hub %s', uuid)
+                        hubs[hub['uuid']] = hub
+                    else:
+                        logger.debug('Found existing hub %s', uuid)
+            client_connection.close()
 
     def deserialize_response(self, response):
         """Parses `key:value;` formatted string into dictionary"""
@@ -83,9 +81,8 @@ class Discovery:
 
             time.sleep(scan_interval)
 
-        # Close the sockets
+        # Close the socket
         ping_sock.close()
-        listen_socket.close()
 
         logger.info('Completed scan, %s hub(s) found.', len(hubs))
         return [hubs[h] for h in hubs]
