@@ -8,6 +8,7 @@ import json
 import logging
 from pyharmony import auth as harmony_auth
 from pyharmony import client as harmony_client
+from pyharmony import discovery as harmony_discovery
 import sys
 import time
 
@@ -42,6 +43,7 @@ def get_client(ip, port):
 
 
 # Functions for use when module is imported
+
 
 def ha_get_token(ip, port):
     token = harmony_auth.get_auth_token(ip, port)
@@ -286,6 +288,19 @@ def ha_change_channel(token, ip, port, channel):
         logger.error('Unable to change the channel')
         return False
 
+def ha_discover(scan_attempts, scan_interval):
+    """Discovers hubs on local network.
+    Args:
+        scan_attempts (int): Number of times to scan the network
+        scan_interval (int): Seconds between running each network scan
+
+    Returns:
+        List of config info for any hubs found
+    """
+    hubs = harmony_discovery.discover(scan_attempts, scan_interval)
+    return hubs
+
+
 # Functions for use on command line
 def show_config(args):
     """Connects to the Harmony and return current configuration.
@@ -378,7 +393,6 @@ def send_command(args):
 
     """
 
-
     client = get_client(args.harmony_ip, args.harmony_port)
     for i in range(args.repeat_num):
         client.send_command(args.device_id, args.command)
@@ -386,6 +400,11 @@ def send_command(args):
 
     client.disconnect(send_close=True)
     print('Command Sent')
+
+
+def discover(args):
+    hubs = harmony_discovery.discover()
+    pprint(hubs)
 
 
 def sync(args):
@@ -407,12 +426,14 @@ def main():
     parser = argparse.ArgumentParser(description='Pyharmony - Harmony device control',
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
-    required_flags = parser.add_argument_group('required arguments')
+    required_flags = parser.add_mutually_exclusive_group(required=True)
 
     # Required flags go here.
     required_flags.add_argument('--harmony_ip',
-                                required=True,
                                 help='IP Address of the Harmony device.')
+    required_flags.add_argument('--discover',
+                                action='store_true',
+                                help='Scan for Harmony devices.')
 
     # Flags with default values go here.
     loglevels = dict((logging.getLevelName(level), level) for level in [10, 20, 30, 40, 50])
@@ -457,7 +478,14 @@ def main():
         level=loglevels[args.loglevel],
         format='%(levelname)s:\t%(name)s\t%(message)s')
 
-    sys.exit(args.func(args))
+    harmony_auth.logger.setLevel(loglevels[args.loglevel])
+    harmony_client.logger.setLevel(loglevels[args.loglevel])
+    harmony_discovery.logger.setLevel(loglevels[args.loglevel])
+
+    if args.discover:
+        sys.exit(discover(args))
+    else:
+        sys.exit(args.func(args))
 
 
 if __name__ == '__main__':
