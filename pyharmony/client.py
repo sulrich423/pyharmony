@@ -191,13 +191,13 @@ class HarmonyClient(sleekxmpp.ClientXMPP):
         """Turns the system off if it's on, otherwise it does nothing.
 
         Returns:
-            True
+            True if the system becomes or is off
         """
         activity = self.get_current_activity()
         if activity != -1:
             return self.start_activity(-1)
         else:
-            return true
+            return True
 
 
 def create_and_connect_client(ip_address, port, token):
