@@ -239,7 +239,7 @@ def ha_send_command(token, ip, port, device, command, repeat_num=1, delay_secs=0
     client.disconnect(send_close=True)
     return 0
 
-def ha_send_commands(token, ip, port, device, commands, delay_secs=0.4):
+def ha_send_commands(token, ip, port, device, commands, repeat_num=1, delay_secs=0.4):
     """Connects to the Harmony and sends multiple simple commands.
 
     Args:
@@ -248,15 +248,17 @@ def ha_send_commands(token, ip, port, device, commands, delay_secs=0.4):
         port (str): Harmony hub port
         device (str): Device ID from Harmony Hub configuration to control
         commands (list of str): List of commands from Harmony Hub configuration to send
+        repeat_num (int) : Number of times to repeat the list of commands. Defaults to 1
         delay_secs (float): Delay between sending commands. Defaults to 0.4 seconds
 
     Returns:
         Completion status
     """
     client = ha_get_client(token, ip, port)
-    for command in commands:
-        client.send_command(device, command)
-        time.sleep(delay_secs)
+    for i in range(repeat_num):
+        for command in commands:
+            client.send_command(device, command)
+            time.sleep(delay_secs)
 
     time.sleep(1)
     client.disconnect(send_close=True)
