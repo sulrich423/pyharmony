@@ -6,7 +6,6 @@
 import argparse
 import json
 import logging
-from pyharmony import auth as harmony_auth
 from pyharmony import client as harmony_client
 from pyharmony import discovery as harmony_discovery
 import sys
@@ -37,7 +36,7 @@ def get_client(ip, port):
     Returns:
         object: Authenticated client instance.
     """
-    token = harmony_auth.get_auth_token(ip, port)
+    token = "unused" 
     client = harmony_client.create_and_connect_client(ip, port, token)
     return client
 
@@ -46,7 +45,7 @@ def get_client(ip, port):
 
 
 def ha_get_token(ip, port):
-    token = harmony_auth.get_auth_token(ip, port)
+    token = "unused" 
     return token
 
 
@@ -480,7 +479,6 @@ def main():
         level=loglevels[args.loglevel],
         format='%(levelname)s:\t%(name)s\t%(message)s')
 
-    harmony_auth.logger.setLevel(loglevels[args.loglevel])
     harmony_client.logger.setLevel(loglevels[args.loglevel])
     harmony_discovery.logger.setLevel(loglevels[args.loglevel])
 
